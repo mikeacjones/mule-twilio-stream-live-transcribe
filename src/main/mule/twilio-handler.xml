@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:google-speech-to-text="http://www.mulesoft.org/schema/mule/google-speech-to-text"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:tls="http://www.mulesoft.org/schema/mule/tls" xmlns:websocket="http://www.mulesoft.org/schema/mule/websocket" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/websocket http://www.mulesoft.org/schema/mule/websocket/current/mule-websocket.xsd
+http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/google-speech-to-text http://www.mulesoft.org/schema/mule/google-speech-to-text/current/mule-google-speech-to-text.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd">
+	<http:listener-config name="HTTPS_Listener_config" doc:name="HTTP Listener config" doc:id="755e600c-a4e4-495b-b372-c487fb6c1ddf" >
+		<http:listener-connection host="0.0.0.0" port="8092" protocol="HTTPS">
+			<tls:context >
+				<tls:key-store type="jks" path="keystore.jks" alias="mule" keyPassword="${jksPassword}" password="${jksPassword}" />
+			</tls:context>
+		</http:listener-connection>
+	</http:listener-config>
+	<websocket:config name="WebSockets_Config" doc:name="WebSockets Config" doc:id="f7db1e3f-c324-42ba-957c-f61c0116690b" >
+		<websocket:connection >
+			<websocket:server-settings listenerConfig="HTTPS_Listener_config" />
+		</websocket:connection>
+	</websocket:config>
+	<google-speech-to-text:config name="Google_Speech_to_Text_Config" doc:name="Google Speech to Text Config" doc:id="2534b2e5-eb52-4877-8234-07d4045dd76b" >
+		<google-speech-to-text:connection jsonTokenFile="${mule.home}/apps/${app.name}/google-cloud.json" sessionID="test1" sampleRate="8000" audioEncoding="MULAW" languageCode="en-US"/>
+	</google-speech-to-text:config>
+	<http:listener-config name="HTTP_Listener_config_NON_HTTPS" doc:name="HTTP Listener config" doc:id="b718eaaa-4f07-4815-97b5-79d646f5c60a" >
+		<http:listener-connection host="0.0.0.0" port="8091" />
+	</http:listener-config>
+	<file:config name="File_Config" doc:name="File Config" doc:id="1ed40390-25f3-4d21-b895-0cf11a5e1381" >
+		<file:connection workingDir="${mule.home}/apps/${app.name}/" />
+	</file:config>
+	<flow name="new-call-webhook" doc:id="4209f9e9-8907-4afc-8f6d-fda858931fac">
+		<http:listener doc:name="Listener" doc:id="450b0ffc-aba4-4d8e-b62a-67e16c21e960" config-ref="HTTPS_Listener_config" path="/new-call" />
+		<set-variable value="${baseUrl}" doc:name="set base url" doc:id="215f64f0-528b-4ff8-a4ac-0cac39eb7a9e" variableName="baseUrl"/>
+		<ee:transform doc:name="Initiate stream and recording" doc:id="fff3f1db-3854-4d8f-9075-83eb64213909">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/xml
+---
+Response: {
+	Start: {
+		Stream @(url: 'wss://$(vars.baseUrl)/audiostream'): null,
+	},
+	Dial @(record: 'record-from-ringing-dual'): {
+		Number: '+14703068347'
+	} 
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="audio-stream-data" doc:id="51501279-e365-48b8-a2ca-c7010a5a0519" maxConcurrency="1">
+		<websocket:inbound-listener doc:name="On New Inbound Message" doc:id="80255036-fda5-4248-9da7-b4b7c43e007d" config-ref="WebSockets_Config" path="/audiostream" outputMimeType="application/json"/>
+		<choice doc:name="Choice" doc:id="e00eab49-7687-4ecd-a85a-95c584e91832" >
+			<when expression='#[payload.event == "media"]'>
+				<google-speech-to-text:send-audio-data doc:name="Send Audio Data" doc:id="ac5df662-ad47-4f9b-93d2-79d26e100d8f" config-ref="Google_Speech_to_Text_Config" data="#[payload.media.payload]"/>
+			</when>
+			<when expression='#[payload.event == "stop"]'>
+				<google-speech-to-text:close-audio-transcription doc:name="Close Audio Transcription" doc:id="b2cfc85c-1b14-4002-b053-3f7030ee179b" config-ref="Google_Speech_to_Text_Config"/>
+			</when>
+		</choice>
+	</flow>
+</mule>

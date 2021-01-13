@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:file="http://www.mulesoft.org/schema/mule/file"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<flow name="web-view" doc:id="3a1fc693-3e17-4cba-9eb6-59de3e557227" >
+		<http:listener doc:name="Listener" doc:id="dbbff504-f33e-43b3-84c6-5d6116995f06" config-ref="HTTPS_Listener_config" path="/web-view" >
+			<http:response >
+				<http:headers ><![CDATA[#[output application/java
+---
+{
+	"Content-Type" : "text/html"
+}]]]></http:headers>
+			</http:response>
+		</http:listener>
+		<set-variable value="${baseUrl}" doc:name="Set Variable" doc:id="acf0e459-6f3b-4674-9e75-60002d558e02" variableName="baseUrl"/>
+		<file:read doc:name="return index.html" doc:id="104e0cb4-cadc-4ca2-a9c8-e1168bdfd15a" config-ref="File_Config" path="index.html" outputMimeType="text/plain" />
+		<ee:transform doc:name="Transform Message" doc:id="c9899efa-8901-4ed9-9fd9-393e7e632c6e" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output text/plain
+---
+payload replace '{baseUrl}' with vars.baseUrl]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>

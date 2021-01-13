@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:google-speech-to-text="http://www.mulesoft.org/schema/mule/google-speech-to-text" xmlns:websocket="http://www.mulesoft.org/schema/mule/websocket"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/websocket http://www.mulesoft.org/schema/mule/websocket/current/mule-websocket.xsd
+http://www.mulesoft.org/schema/mule/google-speech-to-text http://www.mulesoft.org/schema/mule/google-speech-to-text/current/mule-google-speech-to-text.xsd">
+	<flow name="livetranscript-new-connection" doc:id="0603e84a-9437-433e-87ac-5bcea74c9a79" >
+		<websocket:on-inbound-connection doc:name="On New Inbound Connection" doc:id="0643fb25-d618-4b21-b2e3-08b4f718884a" config-ref="WebSockets_Config" path="/livetranscript" />
+		<logger level="INFO" doc:name="Logger" doc:id="6cc54aca-7760-45a8-b233-a054e027d137" message="#[payload]" />
+	</flow>
+	<flow name="livetranscript-new-message" doc:id="4955d668-a97c-465a-9089-3c8ebe9917f4" >
+		<websocket:inbound-listener doc:name="On New Inbound Message" doc:id="7b682f3e-d755-49e9-8954-2e68a7a7a6b8" config-ref="WebSockets_Config" path="/livetranscript" />
+		<logger level="INFO" doc:name="Logger" doc:id="78abfdd8-b5e5-4e56-a9e9-66555582912a" message="#[payload]" />
+	</flow>
+	<flow name="handle-speech-response-stream" doc:id="fd84dab4-50bc-49d9-b053-e98afacbe7c2" >
+		<google-speech-to-text:speech-response-source doc:name="Speech response" doc:id="242bf161-c00b-4ab3-a3ba-14bf357f3b04" config-ref="Google_Speech_to_Text_Config" />
+		<websocket:broadcast doc:name="Broadcast live transcript" doc:id="486d3d96-fa7e-492c-b25c-43ba9f8bb4ae" config-ref="WebSockets_Config" path="/livetranscript" >
+			<websocket:content ><![CDATA[#[output application/json
+---
+payload]]]></websocket:content>
+		</websocket:broadcast>
+	</flow>
+</mule>

@@ -1,0 +1,25 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<types:mule xmlns:types="http://www.mulesoft.org/schema/mule/types">
+  <types:catalog>
+    <types:type name="example-transcript" format="json">
+      <types:shape format="weave" example="examples/example-transcript.json"><![CDATA[%dw 2.0
+
+type example_transcript = {|
+  confidence: Number {"typeId": "double"}, 
+  transcript: String, 
+  isFinal: Boolean
+|} {"example": "{\\\"confidence\\\":0.7428362965583801,\\\"transcript\\\":\\\" Okay. Well, it looks like the transcription really isn't very good. But at least the demonstrate live transcription, so that's all we really need.\\\",\\\"isFinal\\\":true}"}
+
+]]></types:shape>
+    </types:type>
+  </types:catalog>
+  <types:enrichment select="#ca5d1d61-7cec-48a6-97b6-a8de4a3d179b">
+    <types:processor-declaration>
+      <types:output-event>
+        <types:message>
+          <types:payload type="example-transcript"/>
+        </types:message>
+      </types:output-event>
+    </types:processor-declaration>
+  </types:enrichment>
+</types:mule>
