@@ -51,6 +51,9 @@ Response: {
 	</flow>
 	<flow name="audio-stream-data" doc:id="51501279-e365-48b8-a2ca-c7010a5a0519" maxConcurrency="1">
 		<websocket:inbound-listener doc:name="On New Inbound Message" doc:id="80255036-fda5-4248-9da7-b4b7c43e007d" config-ref="WebSockets_Config" path="/audiostream" outputMimeType="application/json"/>
+		<async doc:name="Async" doc:id="c6338b8c-430a-4f69-9f5a-caee7a8ee0cb" >
+			<logger level="INFO" doc:name="Logger" doc:id="ad73ca9a-2264-4538-af5e-d96cf5894787" message='#["RECEIVING NEW AUDIO DATA @ $(now())"]' />
+		</async>
 		<choice doc:name="Choice" doc:id="e00eab49-7687-4ecd-a85a-95c584e91832" >
 			<when expression='#[payload.event == "media"]'>
 				<google-speech-to-text:send-audio-data doc:name="Send Audio Data" doc:id="ac5df662-ad47-4f9b-93d2-79d26e100d8f" config-ref="Google_Speech_to_Text_Config" data="#[payload.media.payload]"/>
@@ -59,5 +62,6 @@ Response: {
 				<google-speech-to-text:close-audio-transcription doc:name="Close Audio Transcription" doc:id="b2cfc85c-1b14-4002-b053-3f7030ee179b" config-ref="Google_Speech_to_Text_Config"/>
 			</when>
 		</choice>
+		<logger level="INFO" doc:name="Logger" doc:id="d28d7e28-c5df-4d10-b6d5-79424629092c" message='#["AUDIO DATA TRANSMITTED TO GOOGLE DONE @ $(now())"]'/>
 	</flow>
 </mule>
