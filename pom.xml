@@ -39,7 +39,7 @@
 		<dependency>
 			<groupId>net.mikej.connectors.google</groupId>
 			<artifactId>google-speech-to-text</artifactId>
-			<version>1.0.0-20-SNAPSHOT</version>
+			<version>1.0.0-21-SNAPSHOT</version>
 			<classifier>mule-plugin</classifier>
 		</dependency>
 		<dependency>

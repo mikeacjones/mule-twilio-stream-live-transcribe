@@ -15,10 +15,14 @@ http://www.mulesoft.org/schema/mule/google-speech-to-text http://www.mulesoft.or
 	</flow>
 	<flow name="handle-speech-response-stream" doc:id="fd84dab4-50bc-49d9-b053-e98afacbe7c2" >
 		<google-speech-to-text:speech-response-source doc:name="Speech response" doc:id="242bf161-c00b-4ab3-a3ba-14bf357f3b04" config-ref="Google_Speech_to_Text_Config" />
+		<async doc:name="Async" doc:id="8c306fab-e058-4d35-8ddb-8a223e2f4448" >
+			<logger level="INFO" doc:name="Logger" doc:id="068dedf9-4e2b-4462-8823-d9f352563927" message='#["SPEECH RESPONSE @ $(now())"]' />
+		</async>
 		<websocket:broadcast doc:name="Broadcast live transcript" doc:id="486d3d96-fa7e-492c-b25c-43ba9f8bb4ae" config-ref="WebSockets_Config" path="/livetranscript" >
 			<websocket:content ><![CDATA[#[output application/json
 ---
 payload]]]></websocket:content>
 		</websocket:broadcast>
+		<logger level="INFO" doc:name="Logger" doc:id="f0a3880e-7ff2-4596-9a52-b9225496ff48" message='#["SPEECH RESPONSE BROADCAST FINISHED @ $(now())"]'/>
 	</flow>
 </mule>
